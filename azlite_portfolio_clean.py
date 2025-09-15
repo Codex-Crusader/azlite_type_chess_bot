@@ -679,7 +679,7 @@ def update_profile(pid: str, stats: Dict):
         try:
             with open(PROFILE_FILE, 'r') as f:
                 profile_data = json.load(f)
-        except:
+        except Exception as e:
             pass
     
     if pid not in profile_data:
