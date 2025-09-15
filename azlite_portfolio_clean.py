@@ -208,7 +208,10 @@ class MCTS:
         self.sims = sims
         self.c_puct = c_puct
 
-    def run(self, board: chess.Board) -> Tuple[Dict[str, float], Optional[chess.Move]]:
+    def run(
+        self,
+        board: chess.Board
+    ) -> Tuple[Dict[str, float], Optional[chess.Move]]:
         """
         Run MCTS from current board and return policy (visit count
         distribution over legal moves) and best move (most visited).
