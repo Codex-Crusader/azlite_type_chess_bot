@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add parent directory to Python path so azlite_portfolio_clean can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import chess
 from azlite_portfolio_clean import parse_input
 
