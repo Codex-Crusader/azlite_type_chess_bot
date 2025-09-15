@@ -117,8 +117,9 @@ class AZNet(nn.Module):
         self.promotion_emb = nn.Embedding(5, move_emb_dim)
 
         # small MLP to score move given (state_embed + move_embs)
+        policy_input_dim = embed_dim + 3 * move_emb_dim
         self.policy_mlp = nn.Sequential(
-            nn.Linear(embed_dim + 3 * move_emb_dim, embed_dim),
+            nn.Linear(policy_input_dim, embed_dim),
             nn.ReLU(inplace=True),
             nn.Linear(embed_dim, 1)  # scalar logit per move
         )
