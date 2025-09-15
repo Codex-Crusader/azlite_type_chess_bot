@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual env
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Data & checkpoints
+selfplay_data/
+az_checkpoints/
+az_checkpoints/*.pt
+
+# Logs
+*.log

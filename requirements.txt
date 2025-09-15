@@ -1,0 +1,7 @@
+python-chess>=1.999
+numpy>=1.21
+torch>=1.10
+torchvision>=0.11
+pytest>=7.0
+flake8>=4.0
+chess~=1.11.2
