@@ -14,4 +14,3 @@ def test_parse_input_single_target():
     mv = parse_input(board, "e4")
     assert mv is not None
     assert mv.to_square == chess.parse_square("e4")
-
