@@ -531,8 +531,8 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
                 pass
 
     # single square like "e4" -> if exactly one candidate, return it; else None
-    if (len(s) == 2 and 
-            s[0] in "abcdefgh" and 
+    if (len(s) == 2 and
+            s[0] in "abcdefgh" and
             s[1] in "12345678"):
         try:
             target = chess.parse_square(s)
@@ -540,8 +540,8 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
             if len(candidates) == 1:
                 return candidates[0]
             if len(candidates) > 1:
-                pawns = [m for m in candidates 
-                         if board.piece_at(m.from_square).piece_type == chess.PAWN]
+                pawns = [m for m in candidates
+                        if board.piece_at(m.from_square).piece_type == chess.PAWN]
                 if len(pawns) == 1:
                     return pawns[0]
                 return None
@@ -557,6 +557,138 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
         pass
 
     return None
+
+# ----------------------------- Missing Functions ---------------------------
+
+def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES, sims: int = MCTS_SIMS, pid: str = "guest"):
+    """
+    Run self-play to generate training data.
+    Saves examples to SELFPLAY_DIR with a unique identifier.
+    """
+    os.makedirs(SELFPLAY_DIR, exist_ok=True)
+    mcts = MCTS(net, sims=sims)
+    all_examples = []
+    
+    print(f"Starting {episodes} self-play episodes with {sims} MCTS simulations each")
+    start_time = time.time()
+    
+    for ep in range(episodes):
+        ep_start = time.time()
+        print(f"Episode {ep+1}/{episodes}...")
+        
+        # Temperature annealing - start with exploration, then become greedy
+        temp = 1.0 if ep < episodes * 0.75 else 0.5
+        examples = self_play_episode(mcts, temperature=temp)
+        all_examples.extend(examples)
+        
+        ep_time = time.time() - ep_start
+        print(f"  Generated {len(examples)} examples in {ep_time:.1f}s")
+    
+    # Save examples to disk
+    timestamp = int(time.time())
+    filename = os.path.join(SELFPLAY_DIR, f"selfplay_{pid}_{timestamp}.npz")
+    
+    # Convert to arrays for efficient storage
+    states = np.array([ex.state for ex in all_examples])
+    pi_lists = [ex.pi for ex in all_examples]
+    outcomes = np.array([ex.outcome for ex in all_examples])
+    
+    # Also save move information for reconstructing legal moves
+    legal_moves = [ex.legal_moves_uci for ex in all_examples]
+    from_indices = [ex.from_idxs for ex in all_examples]
+    to_indices = [ex.to_idxs for ex in all_examples]
+    promo_indices = [ex.promo_idxs for ex in all_examples]
+    
+    np.savez_compressed(
+        filename,
+        states=states,
+        pi_lists=pi_lists,
+        outcomes=outcomes,
+        legal_moves=legal_moves,
+        from_indices=from_indices,
+        to_indices=to_indices,
+        promo_indices=promo_indices
+    )
+    
+    total_time = time.time() - start_time
+    print(f"Self-play complete. {len(all_examples)} examples saved to {filename}")
+    print(f"Total time: {total_time:.1f}s, Avg time per episode: {total_time/episodes:.1f}s")
+    
+    # Update profile with stats
+    update_profile(pid, {
+        "timestamp": timestamp,
+        "episodes": episodes,
+        "examples": len(all_examples),
+        "mcts_sims": sims,
+        "time_taken": total_time
+    })
+
+def load_selfplay_into_buffer(buffer: ReplayBuffer):
+    """
+    Load all self-play data files from SELFPLAY_DIR into the replay buffer.
+    """
+    if not os.path.exists(SELFPLAY_DIR):
+        print(f"Directory {SELFPLAY_DIR} does not exist.")
+        return
+    
+    files = [f for f in os.listdir(SELFPLAY_DIR) if f.startswith("selfplay_") and f.endswith(".npz")]
+    if not files:
+        print(f"No self-play data files found in {SELFPLAY_DIR}.")
+        return
+    
+    print(f"Loading {len(files)} self-play data files...")
+    total_examples = 0
+    
+    for filename in files:
+        filepath = os.path.join(SELFPLAY_DIR, filename)
+        try:
+            data = np.load(filepath, allow_pickle=True)
+            states = data['states']
+            pi_lists = data['pi_lists']
+            outcomes = data['outcomes']
+            legal_moves = data['legal_moves']
+            from_indices = data['from_indices']
+            to_indices = data['to_indices']
+            promo_indices = data['promo_indices']
+            
+            for i in range(len(states)):
+                ex = SelfPlayExample(
+                    state=states[i],
+                    legal_moves_uci=legal_moves[i],
+                    from_idxs=from_indices[i],
+                    to_idxs=to_indices[i],
+                    promo_idxs=promo_indices[i],
+                    pi=pi_lists[i],
+                    outcome=outcomes[i]
+                )
+                buffer.push(ex)
+                total_examples += 1
+                
+            print(f"  Loaded {len(states)} examples from {filename}")
+        except Exception as e:
+            print(f"Error loading {filename}: {e}")
+    
+    print(f"Total examples loaded into buffer: {total_examples}")
+
+def update_profile(pid: str, stats: Dict):
+    """
+    Update the profile file with self-play statistics.
+    """
+    profile_data = {}
+    if os.path.exists(PROFILE_FILE):
+        try:
+            with open(PROFILE_FILE, 'r') as f:
+                profile_data = json.load(f)
+        except:
+            pass
+    
+    if pid not in profile_data:
+        profile_data[pid] = []
+    
+    profile_data[pid].append(stats)
+    
+    with open(PROFILE_FILE, 'w') as f:
+        json.dump(profile_data, f, indent=2)
 
 
 def main():
