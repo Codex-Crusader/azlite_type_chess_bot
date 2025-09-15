@@ -606,12 +606,35 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
 # ----------------------------- Main CLI ------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="AZ-Lite portfolio engine (clean)")
-    parser.add_argument("mode", choices=["selfplay", "train", "play"], help="Mode to run")
-    parser.add_argument("--episodes", type=int, default=SELFPLAY_EPISODES)
-    parser.add_argument("--sims", type=int, default=MCTS_SIMS)
-    parser.add_argument("--pid", type=str, default="guest")
-    parser.add_argument("--checkpoint", type=str, default=None, help="Checkpoint to load")
+    parser = argparse.ArgumentParser(
+        description="AZ-Lite portfolio engine (clean)"
+    )
+    parser.add_argument(
+        "mode",
+        choices=["selfplay", "train", "play"],
+        help="Mode to run"
+    )
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        default=SELFPLAY_EPISODES
+    )
+    parser.add_argument(
+        "--sims",
+        type=int,
+        default=MCTS_SIMS
+    )
+    parser.add_argument(
+        "--pid",
+        type=str,
+        default="guest"
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default=None,
+        help="Checkpoint to load"
+    )
     args = parser.parse_args()
 
     net = AZNet().to(DEVICE)
@@ -633,6 +656,7 @@ def main():
         human_vs_engine(net, mcts_sims=args.sims)
     else:
         print("Unknown mode")
+
 
 if __name__ == "__main__":
     main()
