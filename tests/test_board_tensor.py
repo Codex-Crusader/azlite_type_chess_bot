@@ -10,3 +10,4 @@ def test_board_tensor_shape():
     # initial position: 16 white + 16 black pieces counted in planes
     assert t.sum() == 32
     
+
