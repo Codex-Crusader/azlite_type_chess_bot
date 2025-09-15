@@ -69,7 +69,8 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
             chess.QUEEN: 4,
             chess.KING: 5
         }[piece_type]
-        r = 7 - chess.square_rank(sq)  # tensor row 0 at top (white perspective)
+        # tensor row 0 at top (white perspective)
+        r = 7 - chess.square_rank(sq)
         c = chess.square_file(sq)
         planes[plane_index, r, c] = 1.0
     return planes  # shape (12,8,8)
