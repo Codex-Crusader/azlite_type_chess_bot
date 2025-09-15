@@ -476,55 +476,6 @@ def train_from_buffer(net: AZNet, buffer: ReplayBuffer, lr: float = LEARNING_RAT
 
 # ----------------------------- CLI Actions ----------------------------------
 
-def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES, sims: int = MCTS_SIMS, pid: str = "guest"):
-    """
-    Run several self-play episodes and store generated data in SELFPLAY_DIR/pid_#.jsonl
-    """
-    mcts = MCTS(net, sims=sims)
-    for ep in range(episodes):
-        print(f"Self-play episode {ep+1}/{episodes}")
-        examples = self_play_episode(mcts)
-        fn = os.path.join(SELFPLAY_DIR, f"{pid}_ep_{int(time.time())}_{ep}.jsonl")
-        with open(fn, "w", encoding="utf-8") as f:
-            for ex in examples:
-                rec = {
-                    "state": ex.state.tolist(),
-                    "legal_moves_uci": ex.legal_moves_uci,
-                    "from_idxs": ex.from_idxs,
-                    "to_idxs": ex.to_idxs,
-                    "promo_idxs": ex.promo_idxs,
-                    "pi": ex.pi,
-                    "outcome": ex.outcome
-                }
-                f.write(json.dumps(rec) + "\n")
-        print("Wrote", fn)
-    print("Self-play finished.")
-
-def load_selfplay_into_buffer(buffer: ReplayBuffer, path_dir: str = SELFPLAY_DIR):
-    """
-    Read all jsonl files under directory and push into buffer.
-    """
-    files = [os.path.join(path_dir, f) for f in os.listdir(path_dir) if f.endswith(".jsonl")]
-    files.sort()
-    count = 0
-    for fn in files:
-        try:
-            with open(fn, "r", encoding="utf-8") as f:
-                for line in f:
-                    rec = json.loads(line)
-                    ex = SelfPlayExample(state=np.array(rec["state"], dtype=np.float32),
-                                         legal_moves_uci=rec["legal_moves_uci"],
-                                         from_idxs=rec["from_idxs"],
-                                         to_idxs=rec["to_idxs"],
-                                         promo_idxs=rec["promo_idxs"],
-                                         pi=rec["pi"],
-                                         outcome=rec["outcome"])
-                    buffer.push(ex)
-                    count += 1
-        except (OSError, json.JSONDecodeError):
-            print("Skipping corrupt file:", fn)
-    print(f"Loaded {count} examples into buffer from {len(files)} files.")
-
 def human_vs_engine(net: AZNet, mcts_sims: int = 200):
     board = chess.Board()
     mcts = MCTS(net, sims=mcts_sims)
@@ -547,6 +498,7 @@ def human_vs_engine(net: AZNet, mcts_sims: int = 200):
         board.push(best_move)
         print("Engine plays:", board.san(best_move))
     print("Result:", board.result())
+
 
 def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
     """
@@ -579,14 +531,17 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
                 pass
 
     # single square like "e4" -> if exactly one candidate, return it; else None
-    if len(s) == 2 and s[0] in "abcdefgh" and s[1] in "12345678":
+    if (len(s) == 2 and 
+            s[0] in "abcdefgh" and 
+            s[1] in "12345678"):
         try:
             target = chess.parse_square(s)
             candidates = [m for m in board.legal_moves if m.to_square == target]
             if len(candidates) == 1:
                 return candidates[0]
             if len(candidates) > 1:
-                pawns = [m for m in candidates if board.piece_at(m.from_square).piece_type == chess.PAWN]
+                pawns = [m for m in candidates 
+                         if board.piece_at(m.from_square).piece_type == chess.PAWN]
                 if len(pawns) == 1:
                     return pawns[0]
                 return None
@@ -603,7 +558,6 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
 
     return None
 
-# ----------------------------- Main CLI ------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
