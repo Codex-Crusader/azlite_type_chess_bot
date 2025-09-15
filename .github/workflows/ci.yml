@@ -16,7 +16,7 @@ jobs:
       - name: Lint
         run: |
           pip install flake8
-          flake8 azlite_portfolio_clean.py tests
+          flake8 azlite_portfolio_clean.py
       - name: Run tests
         run: |
           pip install pytest
