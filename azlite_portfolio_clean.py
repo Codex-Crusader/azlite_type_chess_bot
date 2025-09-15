@@ -48,6 +48,7 @@ LEARNING_RATE = 1e-3
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 os.makedirs(SELFPLAY_DIR, exist_ok=True)
 
+
 # ----------------------------- Utilities ------------------------------------
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
@@ -73,23 +74,28 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
         planes[plane_index, r, c] = 1.0
     return planes  # shape (12,8,8)
 
+
 def softmax(x: np.ndarray) -> np.ndarray:
     e = np.exp(x - np.max(x))
     return e / e.sum()
 
+
 def legal_moves_list(board: chess.Board) -> List[chess.Move]:
     return list(board.legal_moves)
+
 
 # ----------------------------- Neural Network -------------------------------
 
 class AZNet(nn.Module):
     """
     Small CNN encoder that produces a state embedding.
-    Policy head: on-the-fly scoring of legal moves via move embeddings combined with state embedding.
+    Policy head: on-the-fly scoring of legal moves via move embeddings
+    combined with state embedding.
     Value head: scalar -1..1
     """
 
-    def __init__(self, embed_dim: int = EMBED_DIM, move_emb_dim: int = MOVE_EMB_DIM, channels=CNN_CHANNELS):
+    def __init__(self, embed_dim: int = EMBED_DIM,
+                 move_emb_dim: int = MOVE_EMB_DIM, channels=CNN_CHANNELS):
         super().__init__()
         # encoder conv layers
         self.conv1 = nn.Conv2d(BOARD_PLANES, channels, kernel_size=3, padding=1)
@@ -107,7 +113,8 @@ class AZNet(nn.Module):
         # move embeddings (learned)
         self.from_emb = nn.Embedding(64, move_emb_dim)
         self.to_emb = nn.Embedding(64, move_emb_dim)
-        self.promotion_emb = nn.Embedding(5, move_emb_dim)  # 0=no promo, 1=Q,2=R,3=B,4=N
+        # 0=no promo, 1=Q,2=R,3=B,4=N
+        self.promotion_emb = nn.Embedding(5, move_emb_dim)
 
         # small MLP to score move given (state_embed + move_embs)
         self.policy_mlp = nn.Sequential(
@@ -139,7 +146,9 @@ class AZNet(nn.Module):
     def value(self, state_embed: torch.Tensor) -> torch.Tensor:
         return self.value_head(state_embed).squeeze(-1)  # (B,)
 
-    def score_moves(self, state_embed: torch.Tensor, from_idx: torch.Tensor, to_idx: torch.Tensor, promo_idx: torch.Tensor) -> torch.Tensor:
+    def score_moves(self, state_embed: torch.Tensor,
+                    from_idx: torch.Tensor, to_idx: torch.Tensor,
+                    promo_idx: torch.Tensor) -> torch.Tensor:
         """
         Score many moves at once.
 
@@ -157,9 +166,11 @@ class AZNet(nn.Module):
             se = state_embed.unsqueeze(0).expand(from_idx.size(0), -1)
         else:
             se = state_embed.expand(from_idx.size(0), -1)
-        inp = torch.cat([se, fe, te, pe], dim=-1)  # (K, E + 3*move_emb_dim)
+        # (K, E + 3*move_emb_dim)
+        inp = torch.cat([se, fe, te, pe], dim=-1)
         logits = self.policy_mlp(inp).squeeze(-1)  # (K,)
         return logits
+
 
 # ----------------------------- MCTS -----------------------------------------
 
@@ -178,6 +189,7 @@ class MCTSNode:
     def Q(self) -> float:
         return (self.W / self.N) if self.N > 0 else 0.0
 
+
 class MCTS:
     def __init__(self, net: AZNet, sims: int = MCTS_SIMS, c_puct: float = 1.2):
         self.net = net
@@ -186,8 +198,9 @@ class MCTS:
 
     def run(self, board: chess.Board) -> Tuple[Dict[str, float], Optional[chess.Move]]:
         """
-        Run MCTS from current board and return policy (visit count distribution over legal moves)
-        and best move (most visited). best move may be None if no legal moves.
+        Run MCTS from current board and return policy (visit count
+        distribution over legal moves) and best move (most visited).
+        best move may be None if no legal moves.
         """
         root = MCTSNode(prior=0.0)
         root.move = None
@@ -198,7 +211,9 @@ class MCTS:
             return {}, None
 
         # NN evaluation for priors
-        state_t = torch.tensor(board_to_tensor(board), dtype=torch.float32, device=DEVICE).unsqueeze(0)
+        state_t = torch.tensor(
+            board_to_tensor(board), dtype=torch.float32, device=DEVICE
+        ).unsqueeze(0)
         with torch.no_grad():
             state_embed = self.net.forward_state(state_t)  # (1,E)
 
@@ -211,12 +226,17 @@ class MCTS:
                 if mv.promotion is None:
                     promo_idxs.append(0)
                 else:
-                    promo_map = {chess.QUEEN:1, chess.ROOK:2, chess.BISHOP:3, chess.KNIGHT:4}
+                    promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
+                                 chess.BISHOP: 3, chess.KNIGHT: 4}
                     promo_idxs.append(promo_map.get(mv.promotion, 0))
-            from_idx_t = torch.tensor(from_idxs, dtype=torch.long, device=DEVICE)
+            from_idx_t = torch.tensor(
+                from_idxs, dtype=torch.long, device=DEVICE)
             to_idx_t = torch.tensor(to_idxs, dtype=torch.long, device=DEVICE)
-            promo_idx_t = torch.tensor(promo_idxs, dtype=torch.long, device=DEVICE)
-            logits = self.net.score_moves(state_embed.squeeze(0), from_idx_t, to_idx_t, promo_idx_t).cpu().numpy()
+            promo_idx_t = torch.tensor(
+                promo_idxs, dtype=torch.long, device=DEVICE)
+            logits = self.net.score_moves(
+                state_embed.squeeze(0), from_idx_t, to_idx_t, promo_idx_t
+            ).cpu().numpy()
             priors = softmax(logits)
 
         total_children = len(legal)
@@ -229,7 +249,8 @@ class MCTS:
         noise = np.random.dirichlet([DIRICHLET_ALPHA] * total_children)
         for i, mv in enumerate(legal):
             key = mv.uci()
-            root.children[key].prior = 0.75 * root.children[key].prior + 0.25 * float(noise[i])
+            root.children[key].prior = (0.75 * root.children[key].prior
+                                        + 0.25 * float(noise[i]))
 
         for _ in range(self.sims):
             self._simulate(board, root)
@@ -237,8 +258,11 @@ class MCTS:
         visits = {k: n.N for k, n in root.children.items()}
         total = sum(visits.values()) or 1
         policy = {k: v / total for k, v in visits.items()}
-        best_move_key = max(visits.items(), key=lambda x: x[1])[0] if visits else None
-        best_move = root.children[best_move_key].move if best_move_key is not None else None
+        best_move_key = max(
+            visits.items(), key=lambda x: x[1]
+        )[0] if visits else None
+        best_move = (root.children[best_move_key].move
+                     if best_move_key is not None else None)
         return policy, best_move
 
     def _simulate(self, board: chess.Board, root: MCTSNode) -> float:
@@ -258,7 +282,8 @@ class MCTS:
             best_score = -1e9
             best_key = None
             for key, child in node.children.items():
-                u = self.c_puct * child.prior * (np.sqrt(total_n) / (1 + child.N))
+                u = (self.c_puct * child.prior *
+                     (np.sqrt(total_n) / (1 + child.N)))
                 q = child.Q()
                 score = q + u
                 if score > best_score:
@@ -281,7 +306,9 @@ class MCTS:
             else:
                 v = 0.0
         else:
-            state_t = torch.tensor(board_to_tensor(b), dtype=torch.float32, device=DEVICE).unsqueeze(0)
+            state_t = torch.tensor(
+                board_to_tensor(b), dtype=torch.float32, device=DEVICE
+            ).unsqueeze(0)
             with torch.no_grad():
                 state_embed = self.net.forward_state(state_t)
                 v = float(self.net.value(state_embed).cpu().numpy()[0])
@@ -296,12 +323,16 @@ class MCTS:
                         if mv.promotion is None:
                             promo_idxs.append(0)
                         else:
-                            promo_map = {chess.QUEEN:1, chess.ROOK:2, chess.BISHOP:3, chess.KNIGHT:4}
+                            promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
+                                         chess.BISHOP: 3, chess.KNIGHT: 4}
                             promo_idxs.append(promo_map.get(mv.promotion, 0))
-                    logits = self.net.score_moves(state_embed.squeeze(0),
-                                                  torch.tensor(from_idxs, dtype=torch.long, device=DEVICE),
-                                                  torch.tensor(to_idxs, dtype=torch.long, device=DEVICE),
-                                                  torch.tensor(promo_idxs, dtype=torch.long, device=DEVICE)).cpu().numpy()
+                    logits = self.net.score_moves(
+                        state_embed.squeeze(0),
+                        torch.tensor(from_idxs, dtype=torch.long,
+                                     device=DEVICE),
+                        torch.tensor(to_idxs, dtype=torch.long, device=DEVICE),
+                        torch.tensor(promo_idxs, dtype=torch.long,
+                                     device=DEVICE)).cpu().numpy()
                     priors = softmax(logits)
                 else:
                     priors = []
@@ -321,6 +352,7 @@ class MCTS:
 
         return v
 
+
 # ----------------------------- Replay Buffer --------------------------------
 
 @dataclass
@@ -331,7 +363,10 @@ class SelfPlayExample:
     to_idxs: List[int]
     promo_idxs: List[int]
     pi: List[float]  # target distribution over legal_moves_uci (same order)
-    outcome: float   # +1 white win, -1 black win, 0 draw (from perspective of player to move at state)
+    # +1 white win, -1 black win, 0 draw
+    # (from perspective of player to move at state)
+    outcome: float
+
 
 class ReplayBuffer:
     def __init__(self, capacity: int = REPLAY_BUFFER_SIZE):
@@ -346,12 +381,15 @@ class ReplayBuffer:
     def __len__(self) -> int:
         return len(self.buffer)
 
+
 # ----------------------------- Self-Play ------------------------------------
 
-def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES, temperature: float = 1.0) -> List[SelfPlayExample]:
+def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES,
+                      temperature: float = 1.0) -> List[SelfPlayExample]:
     """
     Play one self-play game, returning list of training examples.
-    The function no longer requires the net parameter because MCTS already holds the net.
+    The function no longer requires the net parameter because
+    MCTS already holds the net.
     """
     board = chess.Board()
     examples: List[SelfPlayExample] = []
@@ -361,7 +399,8 @@ def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES, temperatu
         policy, best_move = mcts.run(board)
         legal = legal_moves_list(board)
         keys = [mv.uci() for mv in legal]
-        visits = np.array([policy.get(k, 0.0) for k in keys], dtype=np.float32)
+        visits = np.array([policy.get(k, 0.0) for k in keys],
+                          dtype=np.float32)
 
         if temperature == 0:
             pi = np.zeros_like(visits)
@@ -404,7 +443,8 @@ def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES, temperatu
 
         if len(keys) == 0:
             break
-        # choose a move stochastically from pi to generate diverse games (if pi sums to >0)
+        # choose a move stochastically from pi to generate diverse games
+        # (if pi sums to >0)
         probs = np.array(pi, dtype=np.float32)
         if probs.sum() <= 0:
             choice_idx = 0
@@ -428,9 +468,13 @@ def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES, temperatu
 
     return examples
 
+
 # ----------------------------- Training ------------------------------------
 
-def train_from_buffer(net: AZNet, buffer: ReplayBuffer, lr: float = LEARNING_RATE, batch_size: int = TRAIN_BATCH_SIZE, epochs: int = TRAIN_EPOCHS):
+def train_from_buffer(net: AZNet, buffer: ReplayBuffer,
+                      lr: float = LEARNING_RATE,
+                      batch_size: int = TRAIN_BATCH_SIZE,
+                      epochs: int = TRAIN_EPOCHS):
     """
     Sample minibatches and train network.
     """
@@ -452,22 +496,30 @@ def train_from_buffer(net: AZNet, buffer: ReplayBuffer, lr: float = LEARNING_RAT
             total_loss = 0.0
             total_examples = 0
             for ex in batch:
-                state = torch.tensor(ex.state, dtype=torch.float32, device=DEVICE).unsqueeze(0)
+                state = torch.tensor(
+                    ex.state, dtype=torch.float32, device=DEVICE
+                ).unsqueeze(0)
                 state_embed = net.forward_state(state).squeeze(0)
-                z = torch.tensor([ex.outcome], dtype=torch.float32, device=DEVICE)
+                z = torch.tensor([ex.outcome], dtype=torch.float32,
+                                 device=DEVICE)
                 v_pred = net.value(state_embed.unsqueeze(0)).squeeze(0)
                 loss_v = mse(v_pred, z)
 
-                from_idx_t = torch.tensor(ex.from_idxs, dtype=torch.long, device=DEVICE)
-                to_idx_t = torch.tensor(ex.to_idxs, dtype=torch.long, device=DEVICE)
-                promo_idx_t = torch.tensor(ex.promo_idxs, dtype=torch.long, device=DEVICE)
-                logits = net.score_moves(state_embed, from_idx_t, to_idx_t, promo_idx_t)
+                from_idx_t = torch.tensor(
+                    ex.from_idxs, dtype=torch.long, device=DEVICE)
+                to_idx_t = torch.tensor(
+                    ex.to_idxs, dtype=torch.long, device=DEVICE)
+                promo_idx_t = torch.tensor(
+                    ex.promo_idxs, dtype=torch.long, device=DEVICE)
+                logits = net.score_moves(
+                    state_embed, from_idx_t, to_idx_t, promo_idx_t)
                 pi = np.array(ex.pi, dtype=np.float32)
                 if pi.sum() <= 0:
                     continue
                 target_idx = int(np.argmax(pi))
                 logits_2d = logits.unsqueeze(0)
-                target_tensor = torch.tensor([target_idx], dtype=torch.long, device=DEVICE)
+                target_tensor = torch.tensor(
+                    [target_idx], dtype=torch.long, device=DEVICE)
                 loss_p = ce(logits_2d, target_tensor)
 
                 loss = loss_v + loss_p
@@ -487,11 +539,14 @@ def train_from_buffer(net: AZNet, buffer: ReplayBuffer, lr: float = LEARNING_RAT
     torch.save(net.state_dict(), ckpt)
     print("Saved checkpoint:", ckpt)
 
+
 # ----------------------------- CLI Actions ----------------------------------
 
-def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES, sims: int = MCTS_SIMS, pid: str = "guest"):
+def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES,
+                sims: int = MCTS_SIMS, pid: str = "guest"):
     """
-    Run several self-play episodes and store generated data in SELFPLAY_DIR/pid_#.jsonl
+    Run several self-play episodes and store generated data in
+    SELFPLAY_DIR/pid_#.jsonl
     """
     mcts = MCTS(net, sims=sims)
     for ep in range(episodes):
@@ -516,11 +571,14 @@ def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES, sims: int = MCTS_
         print("Wrote", fn)
     print("Self-play finished.")
 
-def load_selfplay_into_buffer(buffer: ReplayBuffer, path_dir: str = SELFPLAY_DIR):
+
+def load_selfplay_into_buffer(buffer: ReplayBuffer,
+                              path_dir: str = SELFPLAY_DIR):
     """
     Read all jsonl files under directory and push into buffer.
     """
-    files = [os.path.join(path_dir, f) for f in os.listdir(path_dir) if f.endswith(".jsonl")]
+    files = [os.path.join(path_dir, f)
+             for f in os.listdir(path_dir) if f.endswith(".jsonl")]
     files.sort()
     count = 0
     for fn in files:
@@ -528,18 +586,20 @@ def load_selfplay_into_buffer(buffer: ReplayBuffer, path_dir: str = SELFPLAY_DIR
             with open(fn, "r", encoding="utf-8") as f:
                 for line in f:
                     rec = json.loads(line)
-                    ex = SelfPlayExample(state=np.array(rec["state"], dtype=np.float32),
-                                         legal_moves_uci=rec["legal_moves_uci"],
-                                         from_idxs=rec["from_idxs"],
-                                         to_idxs=rec["to_idxs"],
-                                         promo_idxs=rec["promo_idxs"],
-                                         pi=rec["pi"],
-                                         outcome=rec["outcome"])
+                    ex = SelfPlayExample(
+                        state=np.array(rec["state"], dtype=np.float32),
+                        legal_moves_uci=rec["legal_moves_uci"],
+                        from_idxs=rec["from_idxs"],
+                        to_idxs=rec["to_idxs"],
+                        promo_idxs=rec["promo_idxs"],
+                        pi=rec["pi"],
+                        outcome=rec["outcome"])
                     buffer.push(ex)
                     count += 1
         except (OSError, json.JSONDecodeError):
             print("Skipping corrupt file:", fn)
     print(f"Loaded {count} examples into buffer from {len(files)} files.")
+
 
 def human_vs_engine(net: AZNet, mcts_sims: int = 200):
     board = chess.Board()
