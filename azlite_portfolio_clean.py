@@ -99,7 +99,12 @@ class AZNet(nn.Module):
                  move_emb_dim: int = MOVE_EMB_DIM, channels=CNN_CHANNELS):
         super().__init__()
         # encoder conv layers
-        self.conv1 = nn.Conv2d(BOARD_PLANES, channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(
+            BOARD_PLANES,
+            channels,
+            kernel_size=3,
+            padding=1
+        )
         self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(channels)
@@ -193,7 +198,12 @@ class MCTSNode:
 
 
 class MCTS:
-    def __init__(self, net: AZNet, sims: int = MCTS_SIMS, c_puct: float = 1.2):
+    def __init__(
+        self,
+        net: AZNet,
+        sims: int = MCTS_SIMS,
+        c_puct: float = 1.2
+    ):
         self.net = net
         self.sims = sims
         self.c_puct = c_puct
