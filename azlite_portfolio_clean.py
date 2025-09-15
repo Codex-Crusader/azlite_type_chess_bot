@@ -380,14 +380,27 @@ def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES, temperatu
         arr_state = board_to_tensor(board)
         from_idxs = [mv.from_square for mv in legal]
         to_idxs = [mv.to_square for mv in legal]
-        promo_idxs = [0 if mv.promotion is None else {chess.QUEEN:1,chess.ROOK:2,chess.BISHOP:3,chess.KNIGHT:4}.get(mv.promotion,0) for mv in legal]
-        examples.append(SelfPlayExample(state=arr_state,
-                                        legal_moves_uci=keys,
-                                        from_idxs=from_idxs,
-                                        to_idxs=to_idxs,
-                                        promo_idxs=promo_idxs,
-                                        pi=pi.tolist() if isinstance(pi, np.ndarray) else list(pi),
-                                        outcome=0.0))
+        promo_map = {
+            chess.QUEEN: 1,
+            chess.ROOK: 2,
+            chess.BISHOP: 3,
+            chess.KNIGHT: 4,
+        }
+        promo_idxs = [
+            0 if mv.promotion is None else promo_map.get(mv.promotion, 0)
+            for mv in legal
+        ]
+        examples.append(
+            SelfPlayExample(
+                state=arr_state,
+                legal_moves_uci=keys,
+                from_idxs=from_idxs,
+                to_idxs=to_idxs,
+                promo_idxs=promo_idxs,
+                pi=pi.tolist() if isinstance(pi, np.ndarray) else list(pi),
+                outcome=0.0,
+            )
+        )
 
         if len(keys) == 0:
             break
@@ -484,7 +497,10 @@ def do_selfplay(net: AZNet, episodes: int = SELFPLAY_EPISODES, sims: int = MCTS_
     for ep in range(episodes):
         print(f"Self-play episode {ep+1}/{episodes}")
         examples = self_play_episode(mcts)
-        fn = os.path.join(SELFPLAY_DIR, f"{pid}_ep_{int(time.time())}_{ep}.jsonl")
+        fn = os.path.join(
+            SELFPLAY_DIR,
+            f"{pid}_ep_{int(time.time())}_{ep}.jsonl",
+        )
         with open(fn, "w", encoding="utf-8") as f:
             for ex in examples:
                 rec = {
@@ -528,7 +544,10 @@ def load_selfplay_into_buffer(buffer: ReplayBuffer, path_dir: str = SELFPLAY_DIR
 def human_vs_engine(net: AZNet, mcts_sims: int = 200):
     board = chess.Board()
     mcts = MCTS(net, sims=mcts_sims)
-    print("Human vs Engine. Enter moves like 'e4', 'e2 e4', 'Nf3'. Type 'quit' to exit.")
+    print(
+        "Human vs Engine. Enter moves like 'e4', 'e2 e4', 'Nf3'. "
+        "Type 'quit' to exit."
+    )
     while not board.is_game_over():
         print(board)
         raw = input("Your move: ").strip()
@@ -603,15 +622,25 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
 
     return None
 
+
 # ----------------------------- Main CLI ------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="AZ-Lite portfolio engine (clean)")
-    parser.add_argument("mode", choices=["selfplay", "train", "play"], help="Mode to run")
+    parser.add_argument(
+        "mode",
+        choices=["selfplay", "train", "play"],
+        help="Mode to run",
+    )
     parser.add_argument("--episodes", type=int, default=SELFPLAY_EPISODES)
     parser.add_argument("--sims", type=int, default=MCTS_SIMS)
     parser.add_argument("--pid", type=str, default="guest")
-    parser.add_argument("--checkpoint", type=str, default=None, help="Checkpoint to load")
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default=None,
+        help="Checkpoint to load",
+    )
     args = parser.parse_args()
 
     net = AZNet().to(DEVICE)
@@ -633,6 +662,7 @@ def main():
         human_vs_engine(net, mcts_sims=args.sims)
     else:
         print("Unknown mode")
+
 
 if __name__ == "__main__":
     main()
