@@ -2,6 +2,7 @@ import chess
 import numpy as np
 from azlite_portfolio_clean import board_to_tensor
 
+
 def test_board_tensor_shape():
     board = chess.Board()
     t = board_to_tensor(board)
