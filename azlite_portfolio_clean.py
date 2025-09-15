@@ -600,33 +600,33 @@ def parse_input(board: chess.Board, raw: str) -> Optional[chess.Move]:
 
     # single square like "e4" -> if exactly one candidate, return it; else None
     if len(s) == 2 and s[0] in "abcdefgh" and s[1] in "12345678":
-    try:
-        target = chess.parse_square(s)
-        candidates = [
-            m for m in board.legal_moves if m.to_square == target
-        ]
-        if len(candidates) == 1:
-            return candidates[0]
-        if len(candidates) > 1:
-            pawns = [
-                m for m in candidates
-                if board.piece_at(m.from_square).piece_type == chess.PAWN
+        try:
+            target = chess.parse_square(s)
+            candidates = [
+                m for m in board.legal_moves if m.to_square == target
             ]
-            if len(pawns) == 1:
-                return pawns[0]
-            return None
+            if len(candidates) == 1:
+                return candidates[0]
+            if len(candidates) > 1:
+                pawns = [
+                    m for m in candidates
+                    if board.piece_at(m.from_square).piece_type == chess.PAWN
+                ]
+                if len(pawns) == 1:
+                    return pawns[0]
+                return None
+        except ValueError:
+            pass
+
+    # SAN fallback
+    try:
+        mv = board.parse_san(s)
+        if mv in board.legal_moves:
+            return mv
     except ValueError:
         pass
 
-# SAN fallback
-try:
-    mv = board.parse_san(s)
-    if mv in board.legal_moves:
-        return mv
-except ValueError:
-    pass
-
-return None
+    return None
 
 
 # ----------------------------- Main CLI ------------------------------------
