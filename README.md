@@ -140,4 +140,8 @@ azlite-portfolio/
 ```
 ---
 
+## Want to Contribute?
+Check out the open issues:  
+on [GitHub Issues](https://github.com/Codex-Crusader/azlite_type_chess_bot/issues)
+
 Thank You For Reading Through This.
