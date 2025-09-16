@@ -517,7 +517,7 @@ def train_from_buffer(net: AZNet, buffer: ReplayBuffer,
                 state_embed = net.forward_state(state).squeeze(0)
                 z = torch.tensor([ex.outcome], dtype=torch.float32,
                                  device=DEVICE)
-                v_pred = net.value(state_embed.unsqueeze(0)).squeeze(0)
+                v_pred = net.value(state_embed.unsqueeze(0)).squeeze()
                 loss_v = mse(v_pred, z)
 
                 from_idx_t = torch.tensor(
