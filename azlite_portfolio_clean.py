@@ -187,7 +187,7 @@ class AZNet(nn.Module):
         return logits
 
 
-# ----------------------------- MCTS -----------------------------------------
+# ----------------------------- MCTS -------------------------------
 
 @dataclass
 class MCTSNode:
@@ -344,8 +344,8 @@ class MCTS:
                         if mv.promotion is None:
                             promo_idxs.append(0)
                         else:
-                            PROMOTION_MAP.get(mv.promotion, 0)
-                            promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
+                            promo_value = PROMOTION_MAP.get(mv.promotion, 0)
+                            promo_idxs.append(promo_value)
                     logits = self.net.score_moves(
                         state_embed.squeeze(0),
                         torch.tensor(from_idxs, dtype=torch.long,
