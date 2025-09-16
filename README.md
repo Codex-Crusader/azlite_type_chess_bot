@@ -18,7 +18,7 @@ The project is designed to be **readable, reproducible, and runnable locally**
 
 > Assumes Linux/macOS or WSL, Python 3.8+.
 
-Create and activate a virtualenv, install deps:
+First, create a virtual environment and install the dependencies:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -26,22 +26,53 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Generate small self-play data (fast test):
+### 1. Generate Training Data (Self-Play)
+This makes the AI play against itself to create game data for training. The data is saved in the `selfplay_data/` directory.
+
+*With the helper script (recommended):*
 ```bash
+# Usage: ./run_selfplay.sh [episodes] [sims_per_move] [player_id]
 ./run_selfplay.sh 5 80 demo
 ```
 
-Train on generated data:
+*Or, directly with Python:*
+```bash
+# The first argument 'selfplay' is the required mode.
+python azlite_portfolio_clean.py selfplay --episodes 5 --sims 80 --pid demo
+```
+
+### 2. Train the Network
+This loads the data from `selfplay_data/` to train the AI. Checkpoints are saved in `az_checkpoints/`.
+
+*With the helper script:*
 ```bash
 ./run_train.sh
 ```
 
-Play against the engine:
+*Or, directly with Python:*
 ```bash
+# The first argument 'train' is the required mode.
+python azlite_portfolio_clean.py train
+```
+
+### 3. Play Against the AI
+This lets you play a game of chess against the engine.
+
+*With the helper script:*
+```bash
+# The script will automatically load the latest checkpoint.
+# The argument is the number of MCTS simulations per move.
 ./run_play.sh 200
 ```
 
-During play, enter moves like e4, Nf3, e2 e4, or quit to exit.
+*Or, directly with Python:*
+```bash
+# The first argument 'play' is the required mode.
+# You must specify which checkpoint to use.
+LATEST_CHECKPOINT=$(ls -t az_checkpoints | head -n 1)
+python azlite_portfolio_clean.py play --sims 200 --checkpoint "az_checkpoints/$LATEST_CHECKPOINT"
+```
+During play, enter moves like `e4`, `Nf3`, `e2 e4`, or `quit` to exit.
 
 ---
 
@@ -90,3 +121,5 @@ azlite-portfolio/
 └─ LICENSE
 ```
 ---
+
+Thank You For Reading Through This.
