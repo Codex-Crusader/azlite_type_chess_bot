@@ -193,7 +193,7 @@ class MCTSNode:
         if self.children is None:
             self.children = {}
 
-    def Q(self) -> float:
+    def queen(self) -> float:
         return (self.W / self.N) if self.N > 0 else 0.0
 
 
@@ -299,7 +299,7 @@ class MCTS:
             for key, child in node.children.items():
                 u = (self.c_puct * child.prior *
                      (np.sqrt(total_n) / (1 + child.N)))
-                q = child.Q()
+                q = child.queen()
                 score = q + u
                 if score > best_score:
                     best_score = score
@@ -638,8 +638,10 @@ def human_vs_engine(net: AZNet, mcts_sims: int = 200):
         if best_move is None:
             print("Engine has no moves; game over.")
             break
+        # Get SAN notation *before* pushing the move to the board.
+        move_san = board.san(best_move)
         board.push(best_move)
-        print("Engine plays:", board.san(best_move))
+        print("Engine plays:", move_san)
     print("Result:", board.result())
 
 
