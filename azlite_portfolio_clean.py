@@ -249,7 +249,6 @@ class MCTS:
                 if mv.promotion is None:
                     promo_idxs.append(0)
                 else:
-                    PROMOTION_MAP.get(mv.promotion, 0)
                     promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
             from_idx_t = torch.tensor(
                 from_idxs, dtype=torch.long, device=DEVICE)
