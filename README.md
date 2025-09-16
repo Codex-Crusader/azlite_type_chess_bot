@@ -1,4 +1,4 @@
-# AZ-Lite — Portfolio AI Chess Engine
+# AZ-Lite — AI Chess Engine
 
 **AZ-Lite** is a compact, AlphaZero-inspired chess engine implemented in Python.  
 It combines **Monte-Carlo Tree Search (MCTS)** with a lightweight **neural network** (policy + value) and learns from **self-play**.  
