@@ -24,6 +24,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
+# ----------------------------- Constant ---------------------------------------
+PROMOTION_MAP = {
+    chess.QUEEN: 1,
+    chess.ROOK: 2,
+    chess.BISHOP: 3,
+    chess.KNIGHT: 4,
+}
 # ----------------------------- Config ---------------------------------------
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -241,9 +249,7 @@ class MCTS:
                 if mv.promotion is None:
                     promo_idxs.append(0)
                 else:
-                    promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
-                                 chess.BISHOP: 3, chess.KNIGHT: 4}
-                    promo_idxs.append(promo_map.get(mv.promotion, 0))
+                    promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
             from_idx_t = torch.tensor(
                 from_idxs, dtype=torch.long, device=DEVICE)
             to_idx_t = torch.tensor(to_idxs, dtype=torch.long, device=DEVICE)
@@ -338,9 +344,8 @@ class MCTS:
                         if mv.promotion is None:
                             promo_idxs.append(0)
                         else:
-                            promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
-                                         chess.BISHOP: 3, chess.KNIGHT: 4}
-                            promo_idxs.append(promo_map.get(mv.promotion, 0))
+                            PROMOTION_MAP.get(mv.promotion, 0)
+                            promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
                     logits = self.net.score_moves(
                         state_embed.squeeze(0),
                         torch.tensor(from_idxs, dtype=torch.long,
@@ -434,16 +439,11 @@ def self_play_episode(mcts: MCTS, max_moves: int = SELFPLAY_MAX_MOVES,
         arr_state = board_to_tensor(board)
         from_idxs = [mv.from_square for mv in legal]
         to_idxs = [mv.to_square for mv in legal]
-        promo_map = {
-            chess.QUEEN: 1,
-            chess.ROOK: 2,
-            chess.BISHOP: 3,
-            chess.KNIGHT: 4,
-        }
+
         promo_idxs = [
-            0 if mv.promotion is None else promo_map.get(mv.promotion, 0)
+            0 if mv.promotion is None else PROMOTION_MAP.get(mv.promotion, 0)
             for mv in legal
-        ]
+            ]
         examples.append(
             SelfPlayExample(
                 state=arr_state,
