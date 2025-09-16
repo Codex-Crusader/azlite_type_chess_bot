@@ -140,6 +140,28 @@ azlite-portfolio/
 ```
 ---
 
+## Roadmap
+
+Here's a look at the planned features and improvements for **AZ-Lite**. Contributions are welcome!
+
+### Short-Term (Next 1-3 Months)
+-   [ ] **GUI for Gameplay:** Develop a simple graphical user interface to make playing against the AI more intuitive.
+-   [ ] **Configuration File:** Move hyperparameters and settings into a `config.yaml` file for easier tuning.
+-   [ ] **Expanded Test Suite:** Add more unit and integration tests to ensure robustness.
+-   [ ] **Performance Profiling:** Profile the self-play and training loops to identify and optimize bottlenecks.
+
+### Mid-Term (Next 3-6 Months)
+-   [ ] **UCI Protocol Support:** Implement the Universal Chess Interface (UCI) protocol to allow the engine to be used with standard chess GUIs (e.g., Arena, Cute Chess).
+-   [ ] **Advanced Network Architectures:** Experiment with more complex neural network designs (e.g., ResNets, Squeeze-and-Excitation Networks).
+-   [ ] **Opening Book:** Integrate a basic opening book to guide the first few moves of the game.
+
+### Long-Term (6+ Months)
+-   [ ] **Distributed Self-Play:** Implement a framework for running self-play games in parallel across multiple machines.
+-   [ ] **Web-Based Interface:** Create a simple web app where users can play against the trained engine.
+-   [ ] **Elo Rating Estimation:** Set up a pipeline to continuously evaluate the engine's strength and estimate its Elo rating.
+
+---
+
 ## Want to Contribute?
 Check out the open issues:  
 on [GitHub Issues](https://github.com/Codex-Crusader/azlite_type_chess_bot/issues)
