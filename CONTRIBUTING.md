@@ -63,5 +63,10 @@ git push origin feature/my-new-feature
 ```
 ---
 
-Please go through CODE_OF_CONDUCT.md.
+## Want to Contribute?
+Check out the open issues:  
+on [GitHub Issues](https://github.com/Codex-Crusader/azlite_type_chess_bot/issues)
+
+Please go through CODE_OF_CONDUCT.md too
+
 Thank You
