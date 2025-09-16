@@ -25,7 +25,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-# ----------------------------- Constant ---------------------------------------
+# ----------------------------- Constant -------------------------------------
 PROMOTION_MAP = {
     chess.QUEEN: 1,
     chess.ROOK: 2,
