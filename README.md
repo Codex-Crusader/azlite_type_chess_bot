@@ -122,7 +122,7 @@ For more details, `see docs/architecture.md` and `docs/hyperparams.md`.
 
 ---
 
-Repository layout
+## Repository layout
 ```bash
 azlite-portfolio/
 ├─ azlite_portfolio_clean.py     # main engine & CLI
