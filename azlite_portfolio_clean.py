@@ -249,9 +249,8 @@ class MCTS:
                 if mv.promotion is None:
                     promo_idxs.append(0)
                 else:
-                    promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
-                                 chess.BISHOP: 3, chess.KNIGHT: 4}
-                    promo_idxs.append(promo_map.get(mv.promotion, 0))
+                    PROMOTION_MAP.get(mv.promotion, 0)
+                    promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
             from_idx_t = torch.tensor(
                 from_idxs, dtype=torch.long, device=DEVICE)
             to_idx_t = torch.tensor(to_idxs, dtype=torch.long, device=DEVICE)
@@ -346,9 +345,8 @@ class MCTS:
                         if mv.promotion is None:
                             promo_idxs.append(0)
                         else:
-                            promo_map = {chess.QUEEN: 1, chess.ROOK: 2,
-                                         chess.BISHOP: 3, chess.KNIGHT: 4}
-                            promo_idxs.append(promo_map.get(mv.promotion, 0))
+                            PROMOTION_MAP.get(mv.promotion, 0)
+                            promo_idxs.append(PROMOTION_MAP.get(mv.promotion, 0))
                     logits = self.net.score_moves(
                         state_embed.squeeze(0),
                         torch.tensor(from_idxs, dtype=torch.long,
