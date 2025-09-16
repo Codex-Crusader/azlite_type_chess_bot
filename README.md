@@ -5,6 +5,14 @@ It combines **Monte-Carlo Tree Search (MCTS)** with a lightweight **neural netwo
 The project is designed to be **readable, reproducible, and runnable locally**
 ---
 
+## Demo
+Quick Demo of bot live in action. Current GIF Showcases Output with 20 games to train on.
+
+![chessbot_demo](https://github.com/user-attachments/assets/3f48f6c7-71f6-4760-bd95-9d833286b0a9)
+
+---
+
+
 ## Highlights
 - MCTS (PUCT) guided by neural priors and values.  
 - On-the-fly move scoring via learned move embeddings (keeps the implementation compact).  
@@ -29,6 +37,9 @@ pip install -r requirements.txt
 ### 1. Generate Training Data (Self-Play)
 This makes the AI play against itself to create game data for training. The data is saved in the `selfplay_data/` directory.
 
+<img width="736" height="253" alt="image" src="https://github.com/user-attachments/assets/ff8f2a9b-a738-4c19-b6dc-c50560472cef" />
+
+
 *With the helper script (recommended):*
 ```bash
 # Usage: ./run_selfplay.sh [episodes] [sims_per_move] [player_id]
@@ -44,6 +55,10 @@ python azlite_portfolio_clean.py selfplay --episodes 5 --sims 80 --pid demo
 ### 2. Train the Network
 This loads the data from `selfplay_data/` to train the AI. Checkpoints are saved in `az_checkpoints/`.
 
+<img width="736" height="92" alt="image" src="https://github.com/user-attachments/assets/97de7599-3372-4093-b46e-99a3b72b860d" />
+
+Decrease low due to small dataset
+
 *With the helper script:*
 ```bash
 ./run_train.sh
@@ -57,6 +72,9 @@ python azlite_portfolio_clean.py train
 
 ### 3. Play Against the AI
 This lets you play a game of chess against the engine.
+
+<img width="736" height="192" alt="image" src="https://github.com/user-attachments/assets/195d0d46-7d34-43aa-aa22-f7b852af6208" />
+
 
 *With the helper script:*
 ```bash
