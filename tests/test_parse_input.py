@@ -20,3 +20,16 @@ def test_parse_input_single_target():
     mv = parse_input(board, "e4")
     assert mv is not None
     assert mv.to_square == chess.parse_square("e4")
+
+
+def test_parse_input_algebraic():
+    board = chess.Board()
+    mv = parse_input(board, "Nf3")  # Knight to f3
+    assert mv is not None
+    assert mv.uci() == "g1f3"  # Knight from g1 to f3
+
+
+def test_parse_input_invalid():
+    board = chess.Board()
+    mv = parse_input(board, "invalid")
+    assert mv is None
