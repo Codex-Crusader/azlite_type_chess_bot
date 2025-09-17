@@ -33,4 +33,3 @@ def test_parse_input_invalid():
     board = chess.Board()
     mv = parse_input(board, "invalid")
     assert mv is None
-    
