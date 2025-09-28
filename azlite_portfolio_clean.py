@@ -1,6 +1,8 @@
-"""
-azlite_portfolio_clean.py
+# When editing code add Yourself to the tally.
+# Add a funny comment too if you want.
+# Current Tally: 2
 
+"""
 Cleaned AlphaZero-lite (lint fixes applied):
 - removed unused parameter from self_play_episode
 - ensured helper/function names use snake_case
@@ -592,6 +594,7 @@ def load_selfplay_into_buffer(buffer: ReplayBuffer,
     """
     Read all jsonl files under directory and push into buffer.
     """
+    # Why am i doing this to myself?
     files = [os.path.join(path_dir, f)
              for f in os.listdir(path_dir) if f.endswith(".jsonl")]
     files.sort()
