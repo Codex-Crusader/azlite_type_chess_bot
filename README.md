@@ -1,5 +1,7 @@
 # AZ-Lite — AI Chess Engine
 
+> **Written up in full:** [codex-crusader.github.io/projects/azlite-type-chess-bot/](https://codex-crusader.github.io/projects/azlite-type-chess-bot/) covers the problem, the architecture, the results and what it deliberately does not do.
+
 **AZ-Lite** is a compact, AlphaZero-inspired chess engine implemented in Python.  
 It combines **Monte-Carlo Tree Search (MCTS)** with a lightweight **neural network** (policy + value) and learns from **self-play**.  
 The project is designed to be **readable, reproducible, and runnable locally**
